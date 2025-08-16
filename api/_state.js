@@ -3,7 +3,6 @@ import { webcrypto } from 'node:crypto';
 const crypto = globalThis.crypto || webcrypto;
 const enc = new TextEncoder();
 
-// HMAC 키(없으면 GITHUB_CLIENT_SECRET 일부 사용)
 const SECRET = (process.env.STATE_SECRET || process.env.GITHUB_CLIENT_SECRET || 'fallback-secret').slice(0, 64);
 
 async function hmac(input) {
@@ -14,7 +13,7 @@ async function hmac(input) {
 
 export async function makeState() {
   const nonce = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-  const ts = Date.now(); // ms
+  const ts = Date.now();
   const data = `${nonce}.${ts}`;
   const sig = await hmac(data);
   return `${data}.${sig}`; // "nonce.ts.sig"
