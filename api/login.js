@@ -1,25 +1,46 @@
-import crypto from "node:crypto";
-import { setCookie } from "./_utils.js";
-import { withCORS } from "./_cors.js";
+// api/login.js
+import { withCORS } from './_cors.js';
+
+// Node 18+ 에서는 webcrypto가 제공됩니다.
+import { webcrypto } from 'node:crypto';
+const cryptoLike = globalThis.crypto || webcrypto;
+
+function randomState() {
+  if (cryptoLike.randomUUID) return cryptoLike.randomUUID();
+  const a = new Uint8Array(16);
+  cryptoLike.getRandomValues(a);
+  return Array.from(a).map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 export default async function handler(req, res) {
-  withCORS(res, req.headers.origin);
+  try {
+    withCORS(res, req.headers.origin);
 
-  const clientId = process.env.GITHUB_CLIENT_ID;
-  const redirect = process.env.OAUTH_REDIRECT;
-  if (!clientId || !redirect) {
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    const redirect = process.env.OAUTH_REDIRECT;
+    if (!clientId || !redirect) {
+      res.statusCode = 500;
+      return res.end('Missing env: GITHUB_CLIENT_ID or OAUTH_REDIRECT');
+    }
+
+    const state = randomState();
+    // state 쿠키
+    res.setHeader(
+      'Set-Cookie',
+      `oauth_state=${encodeURIComponent(state)}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=300`
+    );
+
+    const loc =
+      `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}` +
+      `&redirect_uri=${encodeURIComponent(redirect)}` +
+      `&scope=repo&state=${encodeURIComponent(state)}`;
+
+    res.statusCode = 302;
+    res.setHeader('Location', loc);
+    res.end();
+  } catch (e) {
+    console.error('login error', e);
     res.statusCode = 500;
-    return res.end("Missing OAuth env");
+    res.end('login failed: ' + (e?.message || String(e)));
   }
-
-  const state = crypto.randomUUID();
-  setCookie(res, "oauth_state", state, { maxAge: 300 }); // 5분
-  const url =
-    `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}` +
-    `&redirect_uri=${encodeURIComponent(redirect)}` +
-    `&scope=repo&state=${encodeURIComponent(state)}`;
-
-  res.statusCode = 302;
-  res.setHeader("Location", url);
-  res.end();
 }
