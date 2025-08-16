@@ -2,7 +2,7 @@ import { parseCookies, setCookie } from "./_utils.js";
 import { withCORS } from "./_cors.js";
 
 export default async function handler(req, res) {
-  withCORS(res, req.headers.origin);
+  withCORS(req, res);
 
   const { code, state } = Object.fromEntries(new URL(req.url, "http://x").searchParams);
   const cookies = parseCookies(req);
@@ -29,9 +29,9 @@ export default async function handler(req, res) {
     return res.end("Token exchange failed");
   }
 
-  // 토큰 저장
-  setCookie(res, "gh_token", tokenRes.access_token, { maxAge: 60 * 60 * 24 * 30 }); // 30일
-  // state 쿠키 제거
+  // ?�큰 ?�??
+  setCookie(res, "gh_token", tokenRes.access_token, { maxAge: 60 * 60 * 24 * 30 }); // 30??
+  // state 쿠키 ?�거
   setCookie(res, "oauth_state", "", { maxAge: 0 });
 
   const app = process.env.APP_ORIGIN || "http://localhost:5173";

@@ -3,7 +3,7 @@ import { withCORS, preflight } from "./_cors.js";
 
 export default async function handler(req, res) {
   if (preflight(req, res)) return;
-  withCORS(res, req.headers.origin);
+  withCORS(req, res);
 
   const token = parseCookies(req).gh_token;
   if (!token) {

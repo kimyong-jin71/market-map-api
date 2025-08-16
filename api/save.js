@@ -8,7 +8,7 @@ const BR    = process.env.REPO_BRANCH || "main";
 
 export default async function handler(req, res) {
   if (preflight(req, res)) return;
-  withCORS(res, req.headers.origin);
+  withCORS(req, res);
 
   if (req.method !== "POST") return json(res, 405, { error: "POST only" });
 
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     return json(res, 400, { error: "Invalid JSON" });
   }
 
-  // 현재 파일 sha 조회
+  // ?�재 ?�일 sha 조회
   let sha = undefined;
   const getRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(PATH)}?ref=${BR}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" }

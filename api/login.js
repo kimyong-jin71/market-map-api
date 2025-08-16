@@ -1,7 +1,5 @@
 // api/login.js
-import { withCORS } from './_cors.js';
-
-// Node 18+ 에서는 webcrypto가 제공됩니다.
+import { withCORS, preflight, assertCORS } from './_cors.js';
 import { webcrypto } from 'node:crypto';
 const cryptoLike = globalThis.crypto || webcrypto;
 
@@ -14,7 +12,7 @@ function randomState() {
 
 export default async function handler(req, res) {
   try {
-    withCORS(res, req.headers.origin);
+    withCORS(req, res);
 
     const clientId = process.env.GITHUB_CLIENT_ID;
     const redirect = process.env.OAUTH_REDIRECT;
