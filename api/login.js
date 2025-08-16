@@ -1,36 +1,32 @@
-import { withCORS } from './_cors.js';
-import { setCookie } from './_utils.js';
+// api/login.js
+import { withCORS, preflight } from './_cors.js';
 import { makeState } from './_state.js';
+import { setCookie } from './_utils.js';
 
 export default async function handler(req, res) {
-  try {
-    withCORS(res, req.headers.origin);
+  // OPTIONS 프리플라이트 우선 처리
+  if (preflight(req, res)) return;
 
-    const clientId = process.env.GITHUB_CLIENT_ID;
-    const redirect = process.env.OAUTH_REDIRECT;
-    if (!clientId || !redirect) {
-      res.statusCode = 500;
-      return res.end('Missing env: GITHUB_CLIENT_ID or OAUTH_REDIRECT');
-    }
+  withCORS(req, res); // ← 반드시 (req, res) 순서
 
-    const state = await makeState();
-
-    // 쿠키(있으면 사용) + 쿼리(state) 모두 전송
-    setCookie(res, 'oauth_state', state, {
-      httpOnly: true, secure: true, sameSite: 'None', path: '/', maxAge: 300
-    });
-
-    const loc =
-      `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}`
-      + `&redirect_uri=${encodeURIComponent(redirect)}`
-      + `&scope=repo`
-      + `&state=${encodeURIComponent(state)}`;
-
-    res.writeHead(302, { Location: loc });
-    res.end();
-  } catch (e) {
-    console.error('login error', e);
+  const clientId = process.env.GITHUB_CLIENT_ID;
+  const redirect = process.env.OAUTH_REDIRECT;
+  if (!clientId || !redirect) {
     res.statusCode = 500;
-    res.end('login failed: ' + (e?.message || String(e)));
+    return res.end('Missing env: GITHUB_CLIENT_ID or OAUTH_REDIRECT');
   }
+
+  const state = await makeState();
+  setCookie(res, 'oauth_state', state, {
+    httpOnly: true, secure: true, sameSite: 'None', path: '/', maxAge: 300
+  });
+
+  const loc =
+    `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}` +
+    `&redirect_uri=${encodeURIComponent(redirect)}` +
+    `&scope=repo` +
+    `&state=${encodeURIComponent(state)}`;
+
+  res.writeHead(302, { Location: loc });
+  res.end();
 }

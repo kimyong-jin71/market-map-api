@@ -1,9 +1,13 @@
-import { parseCookies, setCookie } from './_utils.js';
-import { withCORS } from './_cors.js';
-import { verifyState } from './_state.js';
+import { withCORS, preflight } from './_cors.js';
+import { makeState } from './_state.js';
+import { setCookie } from './_utils.js';
 
 export default async function handler(req, res) {
-  withCORS(req, res);
+  // OPTIONS 프리플라이트 우선 처리
+  if (preflight(req, res)) return;
+
+  withCORS(req, res); // ← 반드시 (req, res) 순서
+
 
   const { searchParams } = new URL(req.url, 'https://api');
   const code  = searchParams.get('code');

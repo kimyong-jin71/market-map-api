@@ -1,5 +1,12 @@
-import { parseCookies, readBody, json } from "./_utils.js";
-import { withCORS, preflight } from "./_cors.js";
+import { withCORS, preflight } from './_cors.js';
+import { makeState } from './_state.js';
+import { setCookie } from './_utils.js';
+
+export default async function handler(req, res) {
+  // OPTIONS 프리플라이트 우선 처리
+  if (preflight(req, res)) return;
+
+  withCORS(req, res); // ← 반드시 (req, res) 순서
 
 const OWNER = process.env.REPO_OWNER || "kimyong-jin71";
 const REPO  = process.env.REPO_NAME  || "market-map-web";
@@ -22,7 +29,7 @@ export default async function handler(req, res) {
     return json(res, 400, { error: "Invalid JSON" });
   }
 
-  // ?�재 ?�일 sha 조회
+  // ?�재 ?�일 sha 조회
   let sha = undefined;
   const getRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(PATH)}?ref=${BR}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" }
