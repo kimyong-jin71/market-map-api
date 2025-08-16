@@ -1,41 +1,49 @@
-import { parseCookies, setCookie } from "./_utils.js";
-import { withCORS } from "./_cors.js";
+import { parseCookies, setCookie } from './_utils.js';
+import { withCORS } from './_cors.js';
+import { verifyState } from './_state.js';
 
 export default async function handler(req, res) {
   withCORS(req, res);
 
-  const { code, state } = Object.fromEntries(new URL(req.url, "http://x").searchParams);
+  const { searchParams } = new URL(req.url, 'https://api');
+  const code  = searchParams.get('code');
+  const state = searchParams.get('state');
+
   const cookies = parseCookies(req);
-  if (!code || !state || state !== cookies.oauth_state) {
+  const cookieState = cookies.oauth_state;
+
+  // 쿠키가 없어도 '서명 검증'만 통과하면 OK (있으면 동일성도 체크)
+  const ok = await verifyState(state) && (!cookieState || cookieState === state);
+
+  if (!code || !ok) {
     res.statusCode = 400;
-    return res.end("Invalid state/code");
+    return res.end('Invalid state/code');
   }
 
   const body = {
     client_id: process.env.GITHUB_CLIENT_ID,
     client_secret: process.env.GITHUB_CLIENT_SECRET,
     code,
-    redirect_uri: process.env.OAUTH_REDIRECT
+    redirect_uri: process.env.OAUTH_REDIRECT,
   };
 
-  const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify(body)
+  const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   }).then(r => r.json());
 
   if (!tokenRes.access_token) {
     res.statusCode = 401;
-    return res.end("Token exchange failed");
+    return res.end('Token exchange failed');
   }
 
-  // ?�큰 ?�??
-  setCookie(res, "gh_token", tokenRes.access_token, { maxAge: 60 * 60 * 24 * 30 }); // 30??
-  // state 쿠키 ?�거
-  setCookie(res, "oauth_state", "", { maxAge: 0 });
+  setCookie(res, 'gh_token', tokenRes.access_token, {
+    httpOnly: true, secure: true, sameSite: 'None', path: '/', maxAge: 60 * 60 * 24 * 30
+  });
+  setCookie(res, 'oauth_state', '', { path: '/', maxAge: 0 });
 
-  const app = process.env.APP_ORIGIN || "http://localhost:5173";
-  res.statusCode = 302;
-  res.setHeader("Location", `${app}/market-map-web/?login=ok`);
+  const app = process.env.APP_ORIGIN || 'https://kimyong-jin71.github.io';
+  res.writeHead(302, { Location: `${app}/market-map-web/?login=ok` });
   res.end();
 }

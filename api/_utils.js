@@ -1,4 +1,4 @@
-// 공통 ?�틸(쿠키, JSON ?�답)
+// 공통 ?�틸(쿠키, JSON ?�답)
 export function parseCookies(req) {
   const h = req.headers?.cookie || "";
   return Object.fromEntries(
@@ -15,7 +15,7 @@ export function setCookie(res, name, value, opt = {}) {
     httpOnly = true,
     sameSite = "None",
     secure = true,
-    maxAge, // �?
+    maxAge, // �?
     expires // Date
   } = opt;
   const parts = [`${encodeURIComponent(name)}=${encodeURIComponent(value ?? "")}`, `Path=${path}`];

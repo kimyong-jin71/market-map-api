@@ -1,18 +1,10 @@
-// api/login.js
-import { withCORS, preflight, assertCORS } from './_cors.js';
-import { webcrypto } from 'node:crypto';
-const cryptoLike = globalThis.crypto || webcrypto;
-
-function randomState() {
-  if (cryptoLike.randomUUID) return cryptoLike.randomUUID();
-  const a = new Uint8Array(16);
-  cryptoLike.getRandomValues(a);
-  return Array.from(a).map(b => b.toString(16).padStart(2, '0')).join('');
-}
+import { withCORS } from './_cors.js';
+import { setCookie } from './_utils.js';
+import { makeState } from './_state.js';
 
 export default async function handler(req, res) {
   try {
-    withCORS(req, res);
+    withCORS(res, req.headers.origin);
 
     const clientId = process.env.GITHUB_CLIENT_ID;
     const redirect = process.env.OAUTH_REDIRECT;
@@ -21,20 +13,20 @@ export default async function handler(req, res) {
       return res.end('Missing env: GITHUB_CLIENT_ID or OAUTH_REDIRECT');
     }
 
-    const state = randomState();
-    // state 쿠키
-    res.setHeader(
-      'Set-Cookie',
-      `oauth_state=${encodeURIComponent(state)}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=300`
-    );
+    const state = await makeState();
+
+    // 쿠키(있으면 사용) + 쿼리(state) 모두 전송
+    setCookie(res, 'oauth_state', state, {
+      httpOnly: true, secure: true, sameSite: 'None', path: '/', maxAge: 300
+    });
 
     const loc =
-      `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}` +
-      `&redirect_uri=${encodeURIComponent(redirect)}` +
-      `&scope=repo&state=${encodeURIComponent(state)}`;
+      `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}`
+      + `&redirect_uri=${encodeURIComponent(redirect)}`
+      + `&scope=repo`
+      + `&state=${encodeURIComponent(state)}`;
 
-    res.statusCode = 302;
-    res.setHeader('Location', loc);
+    res.writeHead(302, { Location: loc });
     res.end();
   } catch (e) {
     console.error('login error', e);

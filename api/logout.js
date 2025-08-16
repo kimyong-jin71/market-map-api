@@ -1,5 +1,5 @@
 import { setCookie } from "./_utils.js";
-import { withCORS, preflight } from "./_cors.js";
+import { withCORS, preflight, assertCORS } from './_cors.js';
 
 export default async function handler(req, res) {
   if (preflight(req, res)) return;
