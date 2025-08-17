@@ -2,6 +2,7 @@
 import { withCORS, preflight } from "./_cors.js";
 import { setCookie } from "./_utils.js";
 import { makeState } from "./_state.js";
+import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
   if (preflight(req, res)) return;
