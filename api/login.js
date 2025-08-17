@@ -5,21 +5,28 @@ import { makeState } from "./_state.js";
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  if (preflight(req, res)) return;
-  withCORS(req, res);
+  if (req.method !== "GET") {
+    res.status(405).end();
+    return;
+  }
 
   try {
     const clientId = process.env.GITHUB_CLIENT_ID;
     const redirect = process.env.OAUTH_REDIRECT;
     if (!clientId || !redirect) {
       res.statusCode = 500;
-      return res.end("Missing env: GITHUB_CLIENT_ID or OAUTH_REDIRECT");
+      res.end("Missing env: GITHUB_CLIENT_ID or OAUTH_REDIRECT");
+      return;
     }
 
     // state 생성 + 쿠키에 저장 (5분 유효)
     const state = await makeState();
     setCookie(res, "oauth_state", state, {
-      httpOnly: true, secure: true, sameSite: "None", path: "/", maxAge: 300
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      path: "/",
+      maxAge: 300
     });
 
     const loc =
