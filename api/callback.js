@@ -1,8 +1,8 @@
 import { withCORS, preflight } from "./_cors.js";
 import { parseCookies } from "./_utils.js";
 import { validateState } from "./_state.js";
-import cookie from "cookie"; // ✅ default import
-const { serialize } = cookie;
+import { serialize } from "cookie";
+import fetch from "node-fetch"; // 꼭 import 사용 (ESM)
 
 export default async function handler(req, res) {
   if (preflight(req, res)) return;
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     const cookie = serialize("gh_token", access_token, {
       path: "/",
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: "None",
       maxAge: 60 * 60 * 24 * 7,
     });
