@@ -1,20 +1,14 @@
 // 허용된 Origin 목록
-const ORIGINS = (process.env.APP_ORIGIN || 'http://localhost:5173')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
+const ORIGINS = (process.env.APP_ORIGIN || '').split(',').map(s => s.trim());
 
-// CORS 헤더 추가 함수
 export function withCORS(req, res) {
-  const origin = req?.headers?.origin;
-
-if (origin && ORIGINS.includes(origin)) {
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-}
-   else {
+  const origin = req.headers.origin;
+  if (origin && ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  } else {
     res.statusCode = 403;
     res.end('CORS origin not allowed');
   }
