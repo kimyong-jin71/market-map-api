@@ -1,4 +1,3 @@
-// api/_utils.js
 
 export function parseCookies(req) {
   const h = req?.headers?.cookie || "";
@@ -18,10 +17,11 @@ export function setCookie(res, name, value, opts = {}) {
   const parts = [`${name}=${encodeURIComponent(value)}`];
   if (opts.maxAge != null) parts.push(`Max-Age=${opts.maxAge}`);
   parts.push(`Path=${opts.path || "/"}`);
-  if (opts.httpOnly !== false) parts.push("HttpOnly");
-  if (opts.secure !== false) parts.push("Secure");
   parts.push(`SameSite=${opts.sameSite || "None"}`);
-  // 여러 개 set-cookie 가 필요할 수도 있으니 누적 처리
+  parts.push(`Secure`);
+  parts.push(`HttpOnly`);
+  if (opts.domain) parts.push(`Domain=${opts.domain}`);
+
   const prev = res.getHeader("Set-Cookie");
   if (prev) {
     const arr = Array.isArray(prev) ? prev : [prev];
