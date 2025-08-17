@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     const cookie = serialize("gh_token", access_token, {
       path: "/",
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: "None",
       maxAge: 60 * 60 * 24 * 7,
     });
