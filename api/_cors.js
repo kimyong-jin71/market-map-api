@@ -8,12 +8,13 @@ const ORIGINS = (process.env.APP_ORIGIN || 'http://localhost:5173')
 export function withCORS(req, res) {
   const origin = req?.headers?.origin;
 
-  if (origin && ORIGINS.some(o => origin.startsWith(o))) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  } else {
+if (origin && ORIGINS.includes(origin)) {
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+}
+   else {
     res.statusCode = 403;
     res.end('CORS origin not allowed');
   }
