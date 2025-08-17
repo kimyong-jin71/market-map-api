@@ -1,7 +1,8 @@
 import { withCORS, preflight } from "./_cors.js";
 import { parseCookies } from "./_utils.js";
 import { validateState } from "./_state.js";
-import { serialize } from "cookie";
+import cookie from "cookie"; // ✅ default import
+const { serialize } = cookie;
 
 export default async function handler(req, res) {
   if (preflight(req, res)) return;
