@@ -1,51 +1,37 @@
-// api/_cors.js
-// 안전한 CORS + 프리플라이트 처리 (req가 없을 때도 안전)
-
-const ALLOWED = (process.env.APP_ORIGIN || "")
-  .split(",")
+// 허용된 Origin 목록
+const ORIGINS = (process.env.APP_ORIGIN || 'http://localhost:5173')
+  .split(',')
   .map(s => s.trim())
   .filter(Boolean);
 
-const getOrigin = (req) =>
-  req?.headers?.origin || req?.headers?.Origin || "";
-
-/** 공통 CORS 헤더 적용 */
+// CORS 헤더 추가 함수
 export function withCORS(req, res) {
-  const origin = getOrigin(req);
+  const origin = req?.headers?.origin;
 
-  if (ALLOWED.length > 0) {
-    // allow list에 있으면 요청 origin, 없으면 첫 항목
-    const allow = origin && ALLOWED.includes(origin) ? origin : ALLOWED[0];
-    res.setHeader("Access-Control-Allow-Origin", allow);
-  } else if (origin) {
-    // 설정이 비어 있으면 요청 origin 에코(개발 편의)
-    res.setHeader("Access-Control-Allow-Origin", origin);
+  
+  if (origin && ORIGINS.includes(origin)) {
+    // 허용된 Origin일 경우만 CORS 헤더 설정
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  } else {
+    // Origin 불일치 시 아예 CORS 헤더를 주지 않음 (보안 강화)
+    res.statusCode = 403;
+    res.end('CORS origin not allowed');
   }
-
-  res.setHeader("Vary", "Origin");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
 }
 
-/** OPTIONS 프리플라이트 빠른 종료 */
+// OPTIONS 사전 요청 처리
 export function preflight(req, res) {
-  if (req?.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     withCORS(req, res);
-    res.statusCode = 204;
-    res.end();
+    // CORS 거부 시 이미 응답 끝남
+    if (!res.headersSent) {
+      res.statusCode = 204;
+      res.end();
+    }
     return true;
   }
   return false;
-}
-
-/** (선택) origin 강제 검사 */
-export function assertCORS(req, res) {
-  const origin = getOrigin(req);
-  if (ALLOWED.length && origin && !ALLOWED.includes(origin)) {
-    res.statusCode = 403;
-    res.end("Forbidden Origin");
-    return false;
-  }
-  return true;
 }

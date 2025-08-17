@@ -1,58 +1,56 @@
-// api/callback.js
 import { withCORS, preflight } from "./_cors.js";
-import { parseCookies, setCookie } from "./_utils.js";
-import { verifyState } from "./_state.js";
+import { parseCookies } from "./_utils.js";
+import { validateState } from "./_state.js";
+import fetch from "node-fetch"; // or globalThis.fetch in modern environments
+import { serialize } from "cookie";
 
 export default async function handler(req, res) {
   if (preflight(req, res)) return;
   withCORS(req, res);
 
-  try {
-    const url = new URL(req.url, "http://x");
-    const code = url.searchParams.get("code");
-    const state = url.searchParams.get("state");
-    const cookies = parseCookies(req);
-    const cookieState = cookies.oauth_state;
+  const { code, state } = req.query || {};
 
-    if (!code || !state || !cookieState || state !== cookieState || !(await verifyState(state))) {
+  try {
+    const cookies = parseCookies(req);
+    if (!state || !validateState(state, cookies.oauth_state)) {
       res.statusCode = 400;
-      return res.end("Invalid state/code");
+      return res.end("Invalid OAuth state");
     }
 
-    const body = {
-      client_id: process.env.GITHUB_CLIENT_ID,
-      client_secret: process.env.GITHUB_CLIENT_SECRET,
-      code,
-      redirect_uri: process.env.OAUTH_REDIRECT
-    };
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET;
 
     const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",
       headers: { Accept: "application/json", "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    }).then(r => r.json());
+      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
+    });
 
-    if (!tokenRes.access_token) {
+    const tokenData = await tokenRes.json();
+    const access_token = tokenData.access_token;
+
+    if (!access_token) {
       res.statusCode = 401;
-      return res.end("Token exchange failed");
+      return res.end("OAuth token fetch failed");
     }
 
-    // 토큰 보관 (30일)
-    setCookie(res, "gh_token", tokenRes.access_token, {
-      httpOnly: true, secure: true, sameSite: "None", path: "/", maxAge: 60 * 60 * 24 * 30
+    // ✅ 여기서 gh_token 쿠키 설정
+    const cookie = serialize("gh_token", access_token, {
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 60 * 60 * 24 * 7,
     });
-    // state 쿠키 제거
-    setCookie(res, "oauth_state", "", { path: "/", maxAge: 0 });
+    res.setHeader("Set-Cookie", cookie);
 
-    // 첫 번째 허용 오리진으로 리다이렉트
-    const app = (process.env.APP_ORIGIN || "http://localhost:5173").split(",")[0].trim();
-    const dest = app.endsWith("/") ? app : (app + "/");
-
-    res.writeHead(302, { Location: `${dest}?login=ok` });
+    // ✅ 로그인 후 리다이렉트
+    const redirect = process.env.APP_REDIRECT || "/";
+    res.writeHead(302, { Location: redirect });
     res.end();
   } catch (e) {
-    console.error("callback error", e);
+    console.error("OAuth callback error", e);
     res.statusCode = 500;
-    res.end("callback failed");
+    res.end("callback failed: " + (e?.message || String(e)));
   }
 }
