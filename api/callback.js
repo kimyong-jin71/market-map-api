@@ -1,7 +1,6 @@
 import { withCORS, preflight } from "./_cors.js";
 import { parseCookies } from "./_utils.js";
 import { validateState } from "./_state.js";
-import fetch from "node-fetch"; // or globalThis.fetch in modern environments
 import { serialize } from "cookie";
 
 export default async function handler(req, res) {
@@ -22,7 +21,10 @@ export default async function handler(req, res) {
 
     const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",
-      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
     });
 
@@ -34,7 +36,6 @@ export default async function handler(req, res) {
       return res.end("OAuth token fetch failed");
     }
 
-    // ✅ 여기서 gh_token 쿠키 설정
     const cookie = serialize("gh_token", access_token, {
       path: "/",
       httpOnly: true,
@@ -42,9 +43,9 @@ export default async function handler(req, res) {
       sameSite: "None",
       maxAge: 60 * 60 * 24 * 7,
     });
+
     res.setHeader("Set-Cookie", cookie);
 
-    // ✅ 로그인 후 리다이렉트
     const redirect = process.env.APP_REDIRECT || "/";
     res.writeHead(302, { Location: redirect });
     res.end();
