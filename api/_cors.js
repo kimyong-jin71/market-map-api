@@ -1,29 +1,26 @@
 // api/_cors.js
-const ORIGINS = (process.env.APP_ORIGIN || 'http://localhost:5173')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
+const origin = req.headers.origin;
+const allowed = [process.env.APP_ORIGIN, "http://localhost:5173"];
 
-export function withCORS(req, res) {
-  const origin = req?.headers?.origin;
-
-  console.log("🟡 Incoming CORS request");
-  console.log("🔹 Request Origin:", origin);
-  console.log("🔹 Allowed Origins:", ORIGINS);
-
-if (!origin) {
-  console.warn("🔴 No origin header present in request");
-
-  // ✅ 예외적으로 undefined Origin 허용 (직접 브라우저 접근 시)
-  if (req.method === "GET") {
-    console.log("🟡 Allowing GET request without Origin header");
-    return;
+if (!origin || allowed.includes(origin)) {
+  res.setHeader("Access-Control-Allow-Origin", origin || "*");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  
+  if (req.method === "OPTIONS") {
+    res.statusCode = 200;
+    res.end();
+    return true;
   }
 
-  res.statusCode = 403;
-  res.end("CORS origin header missing");
-  return;
+  return false; // OPTIONS가 아니면 통과
 }
+
+res.statusCode = 403;
+res.end("CORS origin not allowed");
+return true;
+
 
   if (ORIGINS.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
