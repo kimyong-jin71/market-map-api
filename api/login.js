@@ -1,8 +1,5 @@
-// api/login.js
-import { withCORS, preflight } from "./_cors.js";
 import { setCookie } from "./_utils.js";
 import { makeState } from "./_state.js";
-import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -15,26 +12,19 @@ export default async function handler(req, res) {
     const redirect = process.env.OAUTH_REDIRECT;
     if (!clientId || !redirect) {
       res.statusCode = 500;
-      res.end("Missing env: GITHUB_CLIENT_ID or OAUTH_REDIRECT");
-      return;
+      return res.end("Missing env: GITHUB_CLIENT_ID or OAUTH_REDIRECT");
     }
 
-    // state 생성 + 쿠키에 저장 (5분 유효)
     const state = await makeState();
     setCookie(res, "oauth_state", state, {
       httpOnly: true,
       secure: true,
       sameSite: "None",
       path: "/",
-      maxAge: 300
+      maxAge: 300,
     });
 
-    const loc =
-      `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}` +
-      `&redirect_uri=${encodeURIComponent(redirect)}` +
-      `&scope=repo` +
-      `&state=${encodeURIComponent(state)}`;
-
+    const loc = `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirect)}&scope=repo&state=${encodeURIComponent(state)}`;
     res.writeHead(302, { Location: loc });
     res.end();
   } catch (e) {
