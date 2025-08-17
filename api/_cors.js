@@ -11,12 +11,19 @@ export function withCORS(req, res) {
   console.log("🔹 Request Origin:", origin);
   console.log("🔹 Allowed Origins:", ORIGINS);
 
-  if (!origin) {
-    console.warn("🔴 No origin header present in request");
-    res.statusCode = 403;
-    res.end("CORS origin header missing");
+if (!origin) {
+  console.warn("🔴 No origin header present in request");
+
+  // ✅ 예외적으로 undefined Origin 허용 (직접 브라우저 접근 시)
+  if (req.method === "GET") {
+    console.log("🟡 Allowing GET request without Origin header");
     return;
   }
+
+  res.statusCode = 403;
+  res.end("CORS origin header missing");
+  return;
+}
 
   if (ORIGINS.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
