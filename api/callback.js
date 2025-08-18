@@ -12,16 +12,22 @@ module.exports = async function handler(req, res) {
   withCORS(req, res);
 
   const { code, state } = req.query || {};
+  console.log("📥 [CALLBACK] Query Params:", req.query);
 
   try {
     const cookies = parseCookies(req);
+    console.log("🍪 [CALLBACK] Parsed cookies:", cookies);
     if (!state || !validateState(state, cookies.oauth_state)) {
+      console.warn("⚠️ [CALLBACK] Invalid OAuth state");
       res.statusCode = 400;
       return res.end("Invalid OAuth state");
     }
 
     const clientId = process.env.GITHUB_CLIENT_ID;
     const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+
+    console.log("🔐 [CALLBACK] Client ID:", clientId);
+    console.log("🔐 [CALLBACK] Client Secret exists:", !!clientSecret);
 
     const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",

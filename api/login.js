@@ -10,6 +10,10 @@ export default async function handler(req, res) {
   try {
     const clientId = process.env.GITHUB_CLIENT_ID;
     const redirect = process.env.OAUTH_REDIRECT;
+
+    console.log("🔑 [LOGIN] Client ID:", clientId);
+    console.log("🔁 [LOGIN] Redirect URI:", redirect);
+
     if (!clientId || !redirect) {
       res.statusCode = 500;
       return res.end("Missing env: GITHUB_CLIENT_ID or OAUTH_REDIRECT");
