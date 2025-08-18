@@ -1,5 +1,5 @@
-import fetch from 'node-fetch'; // ✅ 이 줄 추가
-import { withCORS, preflight } from './_cors.cjs';
+const fetch = require('node-fetch'); // CommonJS 방식
+const { withCORS, preflight } = require('./_cors.cjs');
 
 function getToken(req) {
   const h = req.headers.cookie || '';
@@ -7,26 +7,44 @@ function getToken(req) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
+  // Preflight 요청 처리
   if (preflight(req, res)) return;
-  withCORS(res);
 
+  // CORS 검사 및 헤더 설정
+  if (!withCORS(req, res)) return;
+
+  // 쿠키에서 GitHub 토큰 추출
   const token = getToken(req);
-  if (!token) return res.status(401).end();
+  if (!token) {
+    res.statusCode = 401;
+    res.end(JSON.stringify({ error: "Missing GitHub token" }));
+    return;
+  }
 
+  // GitHub API 요청
   const r = await fetch('https://api.github.com/user', {
     headers: {
       Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github+json'
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'MyApp'
     }
   });
 
-  if (!r.ok) return res.status(401).end();
+  if (!r.ok) {
+    res.statusCode = 401;
+    res.end(JSON.stringify({ error: "Invalid GitHub token" }));
+    return;
+  }
 
   const u = await r.json();
-  res.status(200).json({
+
+  // 사용자 정보 반환
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify({
     login: u.login,
     id: u.id,
     avatar_url: u.avatar_url
-  });
-}
+  }));
+};
