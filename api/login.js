@@ -2,6 +2,7 @@ import { setCookie } from "./_utils.js";
 import { makeState } from "./_state.js";
 
 export default async function handler(req, res) {
+  console.log("🔁 /api/login called"); // 👈 이 로그가 찍혀야 정상입니다
   if (req.method !== "GET") {
     res.status(405).end();
     return;
