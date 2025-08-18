@@ -1,44 +1,27 @@
-// api/_cors.js
-export function withCORS(req, res) {
-  const origin = req.headers.origin;
-  const allowed = [process.env.APP_ORIGIN, "http://localhost:5173"];
+// api/_cors.cjs
 
-  if (!origin || allowed.includes(origin)) {
+const allowedOrigins = [process.env.APP_ORIGIN, "http://localhost:5173"];
+
+function withCORS(req, res) {
+  const origin = req.headers.origin;
+
+  if (!origin || allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin || "*");
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-    return true; // CORS 허용됨
+    console.log("🟢 CORS allowed for origin:", origin);
+    return true;
   }
 
+  console.warn("❌ CORS blocked for origin:", origin);
   res.statusCode = 403;
   res.end("CORS origin not allowed");
   return false;
 }
 
-
-res.statusCode = 403;
-res.end("CORS origin not allowed");
-return true;
-
-
-  if (ORIGINS.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-
-    console.log("🟢 CORS allowed for origin:", origin);
-  } else {
-    console.warn("❌ CORS blocked for origin:", origin);
-    res.statusCode = 403;
-    res.end("CORS origin not allowed");
-  }
-
-
-// OPTIONS 사전 요청 처리
-export function preflight(req, res) {
+function preflight(req, res) {
   if (req.method === "OPTIONS") {
     if (withCORS(req, res)) {
       res.statusCode = 204;
@@ -49,4 +32,4 @@ export function preflight(req, res) {
   return false;
 }
 
-
+module.exports = { withCORS, preflight };

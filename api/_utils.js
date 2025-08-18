@@ -1,5 +1,6 @@
+// api/_utils.cjs
 
-export function parseCookies(req) {
+function parseCookies(req) {
   const h = req?.headers?.cookie || "";
   const out = {};
   h.split(/; */).forEach(p => {
@@ -13,7 +14,7 @@ export function parseCookies(req) {
   return out;
 }
 
-export function setCookie(res, name, value, opts = {}) {
+function setCookie(res, name, value, opts = {}) {
   const parts = [`${name}=${encodeURIComponent(value)}`];
   if (opts.maxAge != null) parts.push(`Max-Age=${opts.maxAge}`);
   parts.push(`Path=${opts.path || "/"}`);
@@ -31,9 +32,11 @@ export function setCookie(res, name, value, opts = {}) {
   }
 }
 
-export async function readJson(req) {
+async function readJson(req) {
   const chunks = [];
   for await (const ch of req) chunks.push(ch);
   const body = Buffer.concat(chunks).toString("utf8") || "{}";
   return JSON.parse(body);
 }
+
+module.exports = { parseCookies, setCookie, readJson };

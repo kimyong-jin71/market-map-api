@@ -1,5 +1,5 @@
 import fetch from 'node-fetch'; // ✅ 이 줄 추가
-import { withCORS, preflight } from './_cors.js';
+import { withCORS, preflight } from './_cors.cjs';
 
 function getToken(req) {
   const h = req.headers.cookie || '';
