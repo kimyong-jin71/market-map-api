@@ -1,12 +1,13 @@
-import { withCORS, preflight } from "./_cors.js";
-import { parseCookies } from "./_utils.js";
-import { validateState } from "./_state.js";
-import fetch from "node-fetch"; // 꼭 import 사용 (ESM)
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
+// ✅ 최상단에 위치
 const { serialize } = require("cookie");
+const fetch = require("node-fetch");
 
-export default async function handler(req, res) {
+// 다른 import 또는 코드보다 먼저 위치해야 함
+const { withCORS, preflight } = require("./_cors.js");
+const { parseCookies } = require("./_utils.js");
+const { validateState } = require("./_state.js");
+
+module.exports = async function handler(req, res) {
   if (preflight(req, res)) return;
   withCORS(req, res);
 
@@ -57,4 +58,4 @@ export default async function handler(req, res) {
     res.statusCode = 500;
     res.end("callback failed: " + (e?.message || String(e)));
   }
-}
+};
