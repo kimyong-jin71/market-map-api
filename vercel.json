@@ -1,13 +1,8 @@
 {
   "version": 2,
-  "functions": {
-    "api/index.cjs": {
-      "includeFiles": "api/_cors.cjs"
-    }
-  },
   "builds": [
+    { "src": "api/*.js", "use": "@vercel/node" },
     { "src": "api/*.cjs", "use": "@vercel/node" }
-    { "src": "api/*.js", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" }
