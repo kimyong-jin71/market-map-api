@@ -15,6 +15,8 @@ function withCORS(req, res) {
     return true;
   }
 
+
+  
   console.warn("❌ CORS blocked for origin:", origin);
   res.statusCode = 403;
   res.end("CORS origin not allowed");

@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "api/index.cjs": {
+      "includeFiles": ["api/_cors.cjs"]
+    }
+  },
   "builds": [
     { "src": "api/*.cjs", "use": "@vercel/node" }
   ],
