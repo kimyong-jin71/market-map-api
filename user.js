@@ -1,3 +1,4 @@
+import fetch from 'node-fetch'; // ✅ 이 줄 추가
 import { withCORS, preflight } from './_cors.js';
 
 function getToken(req) {
@@ -14,10 +15,18 @@ export default async function handler(req, res) {
   if (!token) return res.status(401).end();
 
   const r = await fetch('https://api.github.com/user', {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json'
+    }
   });
+
   if (!r.ok) return res.status(401).end();
 
   const u = await r.json();
-  res.status(200).json({ login: u.login, id: u.id, avatar_url: u.avatar_url });
+  res.status(200).json({
+    login: u.login,
+    id: u.id,
+    avatar_url: u.avatar_url
+  });
 }
