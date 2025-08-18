@@ -1,8 +1,10 @@
 import { withCORS, preflight } from "./_cors.js";
 import { parseCookies } from "./_utils.js";
 import { validateState } from "./_state.js";
-import { serialize } from "cookie";
 import fetch from "node-fetch"; // 꼭 import 사용 (ESM)
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const { serialize } = require("cookie");
 
 export default async function handler(req, res) {
   if (preflight(req, res)) return;
