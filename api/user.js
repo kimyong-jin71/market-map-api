@@ -1,5 +1,5 @@
 const fetch = require('node-fetch'); // CommonJS 방식
-const { withCORS, preflight } = require('./_cors.cjs');
+const { withCORS, preflight } = require('./_cors.js');
 
 function getToken(req) {
   const h = req.headers.cookie || '';

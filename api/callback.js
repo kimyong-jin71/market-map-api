@@ -3,7 +3,7 @@ const { serialize } = require("cookie");
 const fetch = require("node-fetch");
 
 // 다른 import 또는 코드보다 먼저 위치해야 함
-const { withCORS, preflight } = require("./_cors.cjs");
+const { withCORS, preflight } = require("./_cors.js");
 const { parseCookies } = require("./_utils.js");
 const { validateState } = require("./_state.js");
 
